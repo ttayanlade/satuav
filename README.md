@@ -4,7 +4,7 @@
 Estimation from UAV and Satellite Imagery*.
 
 <p align="center">
-<img src="assets/overview.png" width=100% height=100% class="center">
+<img src="images/overview.png" width=100% height=100% class="center">
 </p>
 
 
