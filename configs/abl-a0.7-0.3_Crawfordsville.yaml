@@ -1,0 +1,7 @@
+alphas:
+- 0.7
+- 0.3
+epochs: 30
+heldout: Crawfordsville
+name: abl-a0.7-0.3_Crawfordsville
+p_satfull: 0.0

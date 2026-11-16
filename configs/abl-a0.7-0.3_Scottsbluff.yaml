@@ -1,0 +1,7 @@
+alphas:
+- 0.7
+- 0.3
+epochs: 30
+heldout: Scottsbluff
+name: abl-a0.7-0.3_Scottsbluff
+p_satfull: 0.0

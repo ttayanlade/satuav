@@ -1,0 +1,10 @@
+epochs: 30
+heldout: Ames
+in_domains:
+- sat_rgb
+- uav_rgb
+name: xmodalrgb_s1_Ames
+out_domains:
+- sat_rgb
+- uav_rgb
+seed: 1

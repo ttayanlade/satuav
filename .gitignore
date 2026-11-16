@@ -1,22 +1,18 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.ipynb_checkpoints/
-
-# Environments
-.env
-.venv/
-env/
-venv/
-
-# Experiment outputs
-output/
-wandb/
+# external code, data and weights (see README)
+MultiMAE/
 *.pth
-*.ckpt
+*.TIF
+*.PNG
 
-# OS / editor
-.DS_Store
-.idea/
-.vscode/
+# outputs written by the pipeline
+data/
+runs/
+features/
+results/
+figs/
+paper_tables/
+
+# python
+__pycache__/
+*.pyc
+.venv/

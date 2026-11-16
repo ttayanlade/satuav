@@ -1,0 +1,3 @@
+epochs: 30
+heldout: Crawfordsville
+name: xmodal_s0_Crawfordsville

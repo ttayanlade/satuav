@@ -1,0 +1,8 @@
+epochs: 30
+heldout: Crawfordsville
+in_domains:
+- uav_rgb
+name: uavmae_s2_Crawfordsville
+out_domains:
+- uav_rgb
+seed: 2

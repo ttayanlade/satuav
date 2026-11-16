@@ -1,0 +1,3 @@
+epochs: 30
+heldout: Lincoln
+name: xmodal_s0_Lincoln

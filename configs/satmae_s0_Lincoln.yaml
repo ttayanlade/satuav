@@ -1,0 +1,7 @@
+epochs: 30
+heldout: Lincoln
+in_domains:
+- sat_all
+name: satmae_s0_Lincoln
+out_domains:
+- sat_all

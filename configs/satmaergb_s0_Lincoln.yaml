@@ -1,0 +1,8 @@
+epochs: 30
+heldout: Lincoln
+in_domains:
+- sat_rgb
+name: satmaergb_s0_Lincoln
+out_domains:
+- sat_rgb
+seed: 0

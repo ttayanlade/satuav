@@ -1,0 +1,4 @@
+epochs: 30
+heldout: Scottsbluff
+name: xmodal_s1_Scottsbluff
+seed: 1

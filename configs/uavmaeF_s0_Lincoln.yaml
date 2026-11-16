@@ -1,0 +1,9 @@
+epochs: 30
+heldout: Lincoln
+in_domains:
+- uav_rgb
+name: uavmaeF_s0_Lincoln
+out_domains:
+- uav_rgb
+seed: 0
+uav_norm: flight

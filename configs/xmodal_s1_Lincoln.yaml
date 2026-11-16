@@ -1,0 +1,4 @@
+epochs: 30
+heldout: Lincoln
+name: xmodal_s1_Lincoln
+seed: 1

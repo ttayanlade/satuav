@@ -1,0 +1,10 @@
+epochs: 30
+heldout: MOValley
+in_domains:
+- sat_rgb
+- uav_rgb
+name: xmodalrgb_s0_MOValley
+out_domains:
+- sat_rgb
+- uav_rgb
+seed: 0

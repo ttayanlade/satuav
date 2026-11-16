@@ -1,0 +1,4 @@
+epochs: 30
+heldout: Ames
+name: xmodal_s2_Ames
+seed: 2

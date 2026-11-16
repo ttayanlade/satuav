@@ -1,0 +1,4 @@
+epochs: 30
+heldout: Crawfordsville
+name: xmodal_s2_Crawfordsville
+seed: 2

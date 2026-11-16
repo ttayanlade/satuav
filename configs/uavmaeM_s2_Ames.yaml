@@ -1,0 +1,9 @@
+epochs: 30
+heldout: Ames
+in_domains:
+- uav_rgb
+name: uavmaeM_s2_Ames
+out_domains:
+- uav_rgb
+seed: 2
+uav_vis: matched

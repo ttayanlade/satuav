@@ -1,0 +1,9 @@
+epochs: 30
+heldout: MOValley
+in_domains:
+- uav_rgb
+name: uavmaeF_s1_MOValley
+out_domains:
+- uav_rgb
+seed: 1
+uav_norm: flight

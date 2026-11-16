@@ -1,0 +1,4 @@
+epochs: 30
+heldout: MOValley
+name: xmodal_s1_MOValley
+seed: 1

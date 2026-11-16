@@ -1,0 +1,10 @@
+epochs: 30
+heldout: Crawfordsville
+in_domains:
+- sat_rgb
+- uav_rgb
+name: xmodalrgb_s1_Crawfordsville
+out_domains:
+- sat_rgb
+- uav_rgb
+seed: 1

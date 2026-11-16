@@ -1,0 +1,9 @@
+epochs: 30
+heldout: Scottsbluff
+in_domains:
+- uav_rgb
+name: uavmaeM_s1_Scottsbluff
+out_domains:
+- uav_rgb
+seed: 1
+uav_vis: matched

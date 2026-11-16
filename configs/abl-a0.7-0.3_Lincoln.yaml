@@ -1,0 +1,7 @@
+alphas:
+- 0.7
+- 0.3
+epochs: 30
+heldout: Lincoln
+name: abl-a0.7-0.3_Lincoln
+p_satfull: 0.0

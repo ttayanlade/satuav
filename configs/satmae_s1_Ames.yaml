@@ -1,0 +1,8 @@
+epochs: 30
+heldout: Ames
+in_domains:
+- sat_all
+name: satmae_s1_Ames
+out_domains:
+- sat_all
+seed: 1

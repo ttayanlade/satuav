@@ -1,0 +1,4 @@
+epochs: 30
+heldout: Scottsbluff
+name: abl-p0_Scottsbluff
+p_satfull: 0.0

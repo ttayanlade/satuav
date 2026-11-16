@@ -1,0 +1,10 @@
+epochs: 30
+heldout: Scottsbluff
+in_domains:
+- sat_rgb
+- uav_rgb
+name: xmodalrgb_s0_Scottsbluff
+out_domains:
+- sat_rgb
+- uav_rgb
+seed: 0

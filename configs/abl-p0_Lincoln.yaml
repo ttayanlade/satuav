@@ -1,0 +1,4 @@
+epochs: 30
+heldout: Lincoln
+name: abl-p0_Lincoln
+p_satfull: 0.0

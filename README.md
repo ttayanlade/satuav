@@ -1,125 +1,110 @@
-# Cross-Modal Learning for Crop Canopy Trait Estimation
+# Multi-platform self-supervised learning for crop trait estimation from UAV and satellite imagery
 
-[`arXiv`](https://arxiv.org/abs/2511.16031) | [`BibTeX`](#citation)
-
-Official implementation for **Cross-Modal Learning for Crop Canopy Trait Estimation**.
+*Multi-Platform Self-Supervised Learning with Crossmodal Pretraining for Crop Trait
+Estimation from UAV and Satellite Imagery*.
 
 <p align="center">
 <img src="assets/overview.png" width=100% height=100% class="center">
 </p>
 
 
-## Set-up
 
-### Dependencies
+The framework has two components, trained and evaluated with the same architecture, initialisation, data and schedule:
 
-This codebase has been tested with the packages and versions specified in `requirements.txt` and Python 3.8.
+- **Unimodal masked autoencoders** for UAV RGB imagery (UAV-MAE) and for satellite imagery (Sat-MAE).
+- **A crossmodal masked autoencoder** (MultiMAE-style) trained on co-registered satellite–UAV plot pairs. The masking
+  is biased toward the satellite modality (Dirichlet α = (0.9, 0.1)), so the model mostly predicts UAV content from
+  the satellite view. At inference the encoder takes either modality alone (XM-UAV, XM-Sat) or both (XM-Sat+UAV).
 
-We recommend creating a new [conda](https://docs.conda.io/en/latest/) virtual environment:
+Every encoder is pretrained leave-one-location-out (5 held-out maize locations × 3 seeds) and evaluated on plot yield
+with frozen ridge probes in three settings: all-field (one probe over all locations), within-site (genotype-grouped
+5-fold CV at the held-out location) and cross-site (trained on the four other locations, new genotypes).
 
-```bash
-conda create -n satuav python=3.8 -y
-conda activate satuav
-```
-
-Then, install [PyTorch](https://pytorch.org/) 1.10.0+ and [torchvision](https://pytorch.org/vision/stable/index.html) 0.11.1+. For example:
-
-```bash
-conda install pytorch=1.10.0 torchvision=0.11.1 -c pytorch -y
-```
-
-Finally, install all other required packages:
+## Setup
 
 ```bash
-pip install timm==0.4.12 einops==0.3.2 pandas==1.3.4 albumentations==1.1.0 wandb==0.12.11
+git clone <this repository> satuav && cd satuav
+git clone https://github.com/EPFL-VILAB/MultiMAE.git && (cd MultiMAE && git checkout 66910f5)   # used unmodified
+mkdir -p MultiMAE/weights
+# download multimae-b_98_rgb+-depth-semseg_1600e_multivit-afff3f8c.pth from the MultiMAE README into MultiMAE/weights/
 ```
 
-Alternatively, install everything from the pinned requirements file:
+Python 3.8 with CUDA 11.3 (the MultiMAE code requires `timm==0.4.12`, which does not run on recent PyTorch):
 
 ```bash
-pip install -r requirements.txt
+uv python install 3.8 && uv venv --python 3.8 .venv && source .venv/bin/activate
+uv pip install torch==1.10.1+cu113 torchvision==0.11.2+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+uv pip install -r requirements.txt
 ```
 
+## Data
 
-
-### Dataset preparation
-
-All datasets are structured so that each modality lives in its own folder and filenames match across modalities:
+The dataset is *Crop performance, aerial, and satellite data from multistate maize yield trials* (2022 season).
+Place it at `MultiMAE/data/` (or set `SATUAV_DATA`):
 
 ```
-/path/to/data/
-├── train/
-│   ├── Sat_RGB/
-│   │   └── location1/
-│   │       ├── plot1.PNG
-│   │       └── plot2.PNG
-│   └── UAV_RGB/
-│       └── location1/
-│           ├── plot1.PNG
-│           └── plot2.PNG
-└── val/
-    ├── Sat_RGB/
-    │   └── location2/
-    │       ├── plot3.PNG
-    │       └── plot4.PNG
-    └── UAV_RGB/
-        └── location2/
-            ├── plot3.PNG
-            └── plot4.PNG
+MultiMAE/data/
+  Sat/<Location>/TP1..TP6/*.TIF      Pléiades Neo plot crops, 6 bands (R, G, B, NIR, red edge, deep blue), 30 cm
+  UAV/<Location>/TP1..TP3/*.PNG      UAV RGB plot crops
+  HYBRID_HIPS_V3.5_ALLPLOTS.csv      ground truth (genotype, nitrogen, yield, ...)
+  DateofCollection.xlsx              acquisition dates
 ```
 
-The folder structure and filenames should match across the `Sat_RGB` and `UAV_RGB` modalities so that each satellite image is paired with its co-registered UAV image. If a dataset does not have per-location subfolders, a generic subfolder name (e.g., `all/`) can be used instead. RGB images are stored as PNG or JPEG.
+Locations: Ames, Crawfordsville, Lincoln, MOValley (Missouri Valley), Scottsbluff. Outputs (`data/`, `runs/`,
+`features/`, `results/`, ...) are written to the repository root, or to `SATUAV_OUT` if set.
 
-Refer to the [paper](https://www.cabidigitallibrary.org/doi/10.31220/agriRxiv.2024.00251) for data information.
+## Reproducing the manuscript
 
-## Training
+`scripts/run_all.sh` runs the full pipeline in order; every step skips work that is already done.
 
-All models are trained on a single node with **8 A100 GPUs**.
+| Step | Command | Output |
+|---|---|---|
+| Manifest, plot tiles, genotype folds | `python -m satuav.manifest` | `data/` |
+| Handcrafted features | `python -m satuav.extract handcrafted` | `features/handcrafted/` |
+| LOLO pretraining + embeddings | `python -m satuav.sweep rgb main seeds uavmae uavctl` | `runs/`, `features/` |
+| UAV-input crossmodal embeddings | `python -m satuav.extract latent <run> ...` | `features/<run>__lat/` |
+| Linear probes | `python -m satuav.evaluate main rgb latent uavmae uavctl latefuse pooledsite` | `results/*.csv` |
+| All manuscript numbers + t-tests | `python -m satuav.paper_stats` | `results/paper_*.csv` |
 
-To train on 8 GPUs using the default settings, run:
+`satuav.paper_stats` writes:
 
-```bash
-OMP_NUM_THREADS=1 torchrun --nproc_per_node=8 run_pretraining_multimae.py \
---config cfgs/sat_uav.yaml \
---data_path /path/to/data/train
-```
+- `paper_main.csv`: Table 3 (absolute R² and Δ with paired t-tests, all-field / within-site / cross-site)
+- `paper_per_location.csv`: Table 4 (R² at each held-out location)
+- `paper_comparisons.csv`: Table 5 (UAV-only controls), Table 6 and text (infrared bands), joint vs separate input,
+  feature-level fusion, and features of UAV images generated from satellite input
+- `paper_timepoints.csv`, `paper_ranking.csv`: Supplementary Tables S3 and S4
 
-### Modifying configs
+Statistics: for each comparison, scores are averaged over seeds at each held-out location, and Δ is tested with a
+two-sided paired t-test over the five locations (df = 4; \* p < 0.05).
 
-The training script supports both YAML config files and command-line arguments. See [`cfgs/sat_uav.yaml`](cfgs/sat_uav.yaml) for the default configuration, where the input and output modalities are set via:
+Pretraining runs are defined by the YAML files in `configs/` (written by `satuav.sweep`); a single run can be started
+with `python -m satuav.pretrain configs/xmodalrgb_s0_Ames.yaml`.
 
-```yaml
-in_domains: Sat_RGB-UAV_RGB
-out_domains: Sat_RGB-UAV_RGB
-```
+| Config prefix | Model | Used for |
+|---|---|---|
+| `xmodalrgb_s{0,1,2}_<loc>` | crossmodal, satellite RGB + UAV RGB | XM-UAV, XM-Sat, XM-Sat+UAV |
+| `satmaergb_s{0,1,2}_<loc>` | satellite-only MAE, RGB | Sat-MAE |
+| `uavmae_s{0,1,2}_<loc>` | UAV-only MAE | UAV-MAE |
+| `uavmaeF_*`, `uavmaeM_*` | UAV-only MAE, per-flight normalisation / matched masking | controls |
+| `xmodal_s*`, `satmae_s*` | the same with all six satellite bands | infrared-band section |
+| `abl-a*`, `abl-p0_*` | masking ablations (seed 0, 3 held-out locations) | Supplementary Table S2 |
 
-To modify training settings, either edit the config file or provide additional command-line arguments. For a full list of possible arguments, see [`run_pretraining_multimae.py`](run_pretraining_multimae.py).
+## Package layout
 
-:information_source: Config file arguments override default arguments, and command-line arguments override both default and config arguments.
+| Module | Purpose |
+|---|---|
+| `paths.py` | paths and constants (override with `SATUAV_MULTIMAE`, `SATUAV_DATA`, `SATUAV_OUT`) |
+| `manifest.py` | file/ground-truth matching, rotation-aligned 224 px tiles, QC flags, genotype folds |
+| `data.py` | tile loading, per-fold normalisation statistics, datasets |
+| `model.py` | MultiMAE wrapper: per-modality patch embeddings and decoders, initialisation from released weights |
+| `pretrain.py` | pretraining loop (biased Dirichlet masking, masked-patch/valid-pixel MSE, augmentation) |
+| `sweep.py` | run definitions (configs) and resumable pretrain → extract driver |
+| `extract.py` | handcrafted features and encoder embeddings per plot |
+| `probe.py` | ridge probes with nested CV in the all-field (P), within-site (A) and cross-site (B_z) settings |
+| `evaluate.py` | probe job sets for each group of runs |
+| `paper_stats.py` | every number in the manuscript, with paired t-tests |
+| `ideas.py`, `report.py`, `summary.py` | result loading helpers and the masking-ablation table |
+| `field_demo.py` | field-level satellite → UAV prediction figure (Supplementary Figure S2) |
 
-:warning: When changing settings, make sure to update `output_dir` and `wandb_run_name` (if logging is activated) to reflect the changes.
-
-### Experiment logging
-
-To activate logging to [Weights & Biases](https://docs.wandb.ai/), either edit the config file or use the `--log_wandb` flag along with any other extra logging arguments.
-
-## Acknowledgement
-
-This repository is an adaptation of [MultiMAE: Multi-modal Multi-task Masked Autoencoders](https://github.com/EPFL-VILAB/MultiMAE/tree/main), which is itself built using the [timm](https://github.com/rwightman/pytorch-image-models/tree/master/timm), [DeiT](https://github.com/facebookresearch/deit), [DINO](https://github.com/facebookresearch/dino), [MoCo v3](https://github.com/facebookresearch/moco-v3), [BEiT](https://github.com/microsoft/unilm/tree/master/beit), [MAE-priv](https://github.com/BUPT-PRIV/MAE-priv), and [MAE](https://github.com/facebookresearch/mae) repositories.
-
-## License
-
-This project is under the CC-BY-NC 4.0 license. See [LICENSE](LICENSE) for details.
-
-## Citation
-
-If you find this repository helpful, please consider citing our work:
-
-```BibTeX
-@article{ayanlade2025crossmodal,
-  title   = {Cross-Modal Learning for Crop Canopy Trait Estimation},
-  author  = {Ayanlade, Timilehin T. and Powadi, Anirudha and Jubery, Talukder Z. and Ganapathysubramanian, Baskar and Sarkar, Soumik},
-  journal = {arXiv preprint arXiv:2511.16031},
-  year    = {2025},
-}
-```
+Some modules contain options for exploratory runs that are not part of the manuscript (for example the `trans`,
+`fix` and `ctx` sweep groups); they are kept for completeness and are not needed to reproduce the reported results.

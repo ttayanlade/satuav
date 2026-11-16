@@ -1,0 +1,7 @@
+epochs: 30
+heldout: Crawfordsville
+in_domains:
+- sat_all
+name: satmae_s0_Crawfordsville
+out_domains:
+- sat_all
